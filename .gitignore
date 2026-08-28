@@ -157,6 +157,9 @@ ENV/
 env.bak/
 venv.bak/
 
+# Machine Learning models
+ml_models/YOLOV8s_Barcode_Detection.pt
+
 # Spyder project settings
 .spyderproject
 .spyproject
