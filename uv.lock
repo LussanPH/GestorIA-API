@@ -344,6 +344,7 @@ dependencies = [
     { name = "djoser" },
     { name = "dotenv" },
     { name = "psycopg2-binary" },
+    { name = "requests" },
     { name = "sqlalchemy" },
 ]
 
@@ -355,6 +356,7 @@ requires-dist = [
     { name = "djoser", specifier = ">=2.3.4" },
     { name = "dotenv", specifier = ">=0.9.9" },
     { name = "psycopg2-binary", specifier = ">=2.9.12" },
+    { name = "requests", specifier = ">=2.34.2" },
     { name = "sqlalchemy", specifier = ">=2.0.52" },
 ]
 
