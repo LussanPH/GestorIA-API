@@ -154,6 +154,21 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'AUTH_HEADER_TYPES': ('Bearer',),
+    'BLACKLIST_AFTER_ROTATION': True
 }
 
 AUTH_USER_MODEL = 'food_register.Usuarios'
+
+DJOSER = {
+    'LOGIN_FIELD': 'email',
+    'USER_CREATE_PASSWORD_RETYPE': True,
+
+    'PASSWORD_RESET_CONFIRM_URL': 'recuperar-senha/{uid}/{token}',
+    
+    'SITE_NAME': 'GestorIA',
+    
+    'SEND_ACTIVATION_EMAIL': False, 
+    'SEND_CONFIRMATION_EMAIL': False,
+}
+
+DOMAIN = 'localhost:5173'
