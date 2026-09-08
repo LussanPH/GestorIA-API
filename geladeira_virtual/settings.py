@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
+    'corsheaders',
     'djoser',
 
     #Apps
@@ -55,6 +56,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -163,6 +165,10 @@ DJOSER = {
     'LOGIN_FIELD': 'email',
     'USER_CREATE_PASSWORD_RETYPE': True,
 
+    'PERMISSIONS': {
+        'password_reset' : ['rest_framework.permissions.AllowAny'],
+    },
+
     'PASSWORD_RESET_CONFIRM_URL': 'recuperar-senha/{uid}/{token}',
     
     'SITE_NAME': 'GestorIA',
@@ -172,3 +178,11 @@ DJOSER = {
 }
 
 DOMAIN = 'localhost:5173'
+
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+CORS_ALLOW_CREDENTIALS = True

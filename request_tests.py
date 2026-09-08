@@ -3,6 +3,7 @@ import requests as req
 credentials = {
     "email":"pedrohenriquelunalessa@gmail.com",
     "password":"pedro123456",
+    "re_password":"pedro123456",
     "nome_completo":"Pedro Henrique Luna Lessa"
 }
 
@@ -25,7 +26,6 @@ resposta = req.post("http://localhost:8000/auth/users/", json=credentials)
 
 print(resposta.json())
 """
-
 #Realizando Login
 """
 resposta = req.post("http://localhost:8000/auth/jwt/create", json=login)
