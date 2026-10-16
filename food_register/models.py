@@ -42,12 +42,12 @@ class Usuarios(AbstractUser):
 
 
 class NotasFiscais(models.Model):
-    chave_acesso = models.IntegerField(primary_key=True)
+    chave_acesso = models.CharField(primary_key=True, max_length=44)
     fk_usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    data_compra = models.DateTimeField(null=False)
-    valor_total = models.FloatField()
-    cnpj = models.IntegerField()
-    metodo_pag = models.CharField(max_length=20)
+    data_compra = models.DateField(null=False)
+    valor_total = models.DecimalField(max_digits=10, decimal_places=2)
+    cnpj = models.CharField(max_length=14, blank=True, default="")
+    metodo_pag = models.CharField(max_length=20, blank=True, default="")
 
 
 class Categorias(models.Model):
@@ -56,9 +56,9 @@ class Categorias(models.Model):
 
 class ProdutosNotasFiscais(models.Model):
     nota_fk = models.ForeignKey(NotasFiscais, on_delete=models.CASCADE)
-    un = models.FloatField(blank=False)
-    valor_unitario = models.FloatField(blank=False)
-    valor_total = models.FloatField(blank=False)
+    un = models.DecimalField(max_digits=10, decimal_places=3, blank=False)
+    valor_unitario = models.DecimalField(max_digits=10, decimal_places=2, blank=False)
+    valor_total = models.DecimalField(max_digits=10, decimal_places=2, blank=False)
     nome = models.CharField(max_length=100, blank=False)
-    marca = models.CharField(max_length=50, blank=False)
+    marca = models.CharField(max_length=50, blank=True, default="nao_identificada")
     categoria_fk = models.ForeignKey(Categorias, on_delete=models.CASCADE)
