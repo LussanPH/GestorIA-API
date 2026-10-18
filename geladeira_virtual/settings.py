@@ -51,7 +51,8 @@ INSTALLED_APPS = [
     'djoser',
 
     #Apps
-    'food_register'
+    'food_register',
+    'scrapping_module',
 ]
 
 MIDDLEWARE = [
