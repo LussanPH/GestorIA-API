@@ -1,7 +1,7 @@
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.http import require_GET
 
-from .services import GerarComprasError, gerar_compras
+from .services import GerarComprasError, gerar_compras, xml_to_json
 
 
 @require_GET
@@ -14,4 +14,6 @@ def compra(request):
             status=502,
         )
 
-    return HttpResponse(xml, content_type="application/xml; charset=utf-8")
+    response = xml_to_json(xml)
+
+    return HttpResponse(response, content_type="application/json; charset=utf-8")

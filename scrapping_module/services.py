@@ -1,6 +1,9 @@
 import requests
 from django.conf import settings
 
+import json
+import xmltodict
+
 DEFAULT_GERAR_COMPRAS_URL = "http://localhost:8001/api/gerar-compra/"
 DEFAULT_TIMEOUT = 30
 
@@ -21,3 +24,7 @@ def gerar_compras() -> bytes:
         raise GerarComprasError(str(exc)) from exc
 
     return response.content
+
+def xml_to_json(xml:bytes):
+    data_dict = xmltodict.parse(xml)
+    return json.dumps(data_dict)
