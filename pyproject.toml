@@ -11,7 +11,10 @@ dependencies = [
     "djangorestframework-simplejwt>=5.5.1",
     "djoser>=2.3.4",
     "dotenv>=0.9.9",
+    "langchain>=1.4.6",
+    "langchain-google-genai>=4.4.2",
     "psycopg2-binary>=2.9.12",
+    "pydantic>=2.14.1",
     "requests>=2.34.2",
     "sqlalchemy>=2.0.52",
 ]

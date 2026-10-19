@@ -5,6 +5,8 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager
 
 
 class CustomUserManager(BaseUserManager):
+    use_in_migrations = True
+    
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError("O endereço de email é obrigatório!")
@@ -36,7 +38,7 @@ class Usuarios(AbstractUser):
 
     REQUIRED_FIELDS = ['nome_completo']
 
-    nome_completo = models.CharField(unique=True, max_length=100)
+    nome_completo = models.CharField(max_length=100)
 
     objects = CustomUserManager()
 
@@ -47,6 +49,7 @@ class NotasFiscais(models.Model):
     data_compra = models.DateField(null=False)
     valor_total = models.DecimalField(max_digits=10, decimal_places=2)
     cnpj = models.CharField(max_length=14, blank=True, default="")
+    nome_estabelecimento = models.CharField(max_length=60, blank=True, default="")
     metodo_pag = models.CharField(max_length=20, blank=True, default="")
 
 
