@@ -9,7 +9,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   gerador_de_compras:
-    image: proguimador/fake-nfce-generator:1.0.0
+    image: proguimador/fake-nfce-generator:1.0.1
     ports:
       - "127.0.0.1:8001:8080"
     restart: unless-stopped
