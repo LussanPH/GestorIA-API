@@ -189,3 +189,13 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_CREDENTIALS = True
 
 LLM_MODEL = os.environ.get("LLM_MODEL", "google_genai:gemini-3.6-flash")
+
+# Classificador local (container classificador-alimentos).
+# Em dev, o container expõe a porta 11434 no host; em Docker, use o nome do
+# serviço (ex.: http://classificador:11434).
+OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://127.0.0.1:11434")
+MODELO_CLASSIFICADOR = os.environ.get(
+    "MODELO_CLASSIFICADOR", "classificador-alimentos"
+)
+CLASSIFICADOR_TIMEOUT = float(os.environ.get("CLASSIFICADOR_TIMEOUT", "30"))
+CLASSIFICADOR_MAX_ITENS = int(os.environ.get("CLASSIFICADOR_MAX_ITENS", "100"))

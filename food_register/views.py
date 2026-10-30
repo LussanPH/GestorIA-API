@@ -5,7 +5,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import NotasFiscais
-from .serializers import NotaSerializer, ProdutoExtraidoSerializer
+from .serializers import (
+    ClassificarRequestSerializer,
+    NotaSerializer,
+    ProdutoClassificadoSerializer,
+    ProdutoExtraidoSerializer,
+)
+from .services.classificacao import ClassificacaoError, classificar_produtos
 from .services.extracao import ExtracaoError, extrair_produtos
 
 # Create your views here.
@@ -47,4 +53,34 @@ class ExtrairProdutosView(APIView):
         return Response({
             "nota": dados_nota,
             "produtos": ProdutoExtraidoSerializer(produtos, many=True).data,
+        })
+
+
+class ClassificarProdutosView(APIView):
+    """POST /api/produtos/classificar/  (produtos já revisados pelo usuário)
+
+    200: {"produtos": [...], "resumo": {...}}
+    400: payload inválido (lista vazia, n_item duplicado, item sem nome)
+    502: classificador indisponível
+    Nada é gravado no banco; a gravação acontece em /notas/confirmar/.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        entrada = ClassificarRequestSerializer(data=request.data)
+        entrada.is_valid(raise_exception=True)
+
+        try:
+            resultado = classificar_produtos(entrada.validated_data["produtos"])
+        except ClassificacaoError:
+            return Response(
+                {"detail": "Classificador indisponível. Selecione as categorias manualmente."},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        return Response({
+            "produtos": ProdutoClassificadoSerializer(
+                resultado["produtos"], many=True
+            ).data,
+            "resumo": resultado["resumo"],
         })
