@@ -1,23 +1,24 @@
 import requests as req
+import json
 
 credentials = {
-    "email":"pedrohenriquelunalessa@gmail.com",
+    "email":"usuario@gmail.com",
     "password":"pedro123456",
     "re_password":"pedro123456",
     "nome_completo":"Pedro Henrique Luna Lessa"
 }
 
 login = {
-    "email":"pedrohenriquelunalessa@gmail.com",
+    "email":"usuario@gmail.com",
     "password":"pedro123456"
 }
 
 header = {
-    'Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzg4ODEyODU0LCJpYXQiOjE3ODg3MjY0NTUsImp0aSI6IjFhNDZjNjM3ODA1ZDQ3N2JhMzBkMWQ0NWExZjk1YzBkIiwidXNlcl9pZCI6IjEifQ.3n8np4NNdYAmPRQwJWKg4_LW4CvzE2Dj6hNPXljQzkE'
+    'Authorization':'Bearer SEU_ACCESS_TOKEN'
 }
 
 refresh_token_logout = {
-    'refresh':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc4OTMzMTI1NCwiaWF0IjoxNzg4NzI2NDU0LCJqdGkiOiI2NTY5NTMxMDY1ODc0ZGRjYjQzMGQwNmZjNjFmZjY1MSIsInVzZXJfaWQiOiIxIn0.vx-Nud3v-ul2wwLM3HWPPPTweBotm5AGB9OQ_au0Z40'
+    'refresh':'SEU_REFRESH_TOKEN'
 }
 
 #Criando Usuário
@@ -26,12 +27,14 @@ resposta = req.post("http://localhost:8000/auth/users/", json=credentials)
 
 print(resposta.json())
 """
-#Realizando Login
+
 """
+#Realizando Login
 resposta = req.post("http://localhost:8000/auth/jwt/create", json=login)
 
 print(resposta.json())
 """
+
 
 #Acessando rotas seguras
 """
@@ -47,3 +50,12 @@ resposta = req.post("http://localhost:8000/auth/jwt/logout/", json=refresh_token
 if resposta.status_code == 200:
     print("Logout realizado com sucesso!")
 """
+
+#Teste extração nota fiscal
+with open("nota.json", encoding="utf-8") as f:
+   nota = json.load(f)
+   
+resposta = req.post("http://localhost:8000/api/produtos/extrair/", json=nota, headers=header)
+
+print(resposta.status_code)
+print(json.dumps(resposta.json(), indent=2, ensure_ascii=False))

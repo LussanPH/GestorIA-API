@@ -187,3 +187,5 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+LLM_MODEL = os.environ.get("LLM_MODEL", "google_genai:gemini-3.6-flash")
