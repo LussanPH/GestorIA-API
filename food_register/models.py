@@ -55,6 +55,12 @@ class NotasFiscais(models.Model):
 
 class Categorias(models.Model):
     categoria = models.CharField(max_length=50, blank=False)
+    # Nome fixo devolvido pelo modelo de classificação (um dos 16 grupos).
+    # Fica separado de "categoria" para permitir renomear o texto exibido sem
+    # quebrar o mapeamento feito pelo backend.
+    grupo_canonico = models.CharField(
+        max_length=50, unique=True, null=True, blank=True
+    )
 
 
 class ProdutosNotasFiscais(models.Model):
