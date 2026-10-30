@@ -2,23 +2,23 @@ import requests as req
 import json
 
 credentials = {
-    "email":"pedrohenriquelunalessa@gmail.com",
+    "email":"usuario@gmail.com",
     "password":"pedro123456",
     "re_password":"pedro123456",
     "nome_completo":"Pedro Henrique Luna Lessa"
 }
 
 login = {
-    "email":"pedrohenriquelunalessa@gmail.com",
+    "email":"usuario@gmail.com",
     "password":"pedro123456"
 }
 
 header = {
-    'Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzkyNTA1MTg2LCJpYXQiOjE3OTI0MTg3ODcsImp0aSI6ImRhYTZkM2I2ZWZiODQ1OWVhNWY3NzkwNjA5ZjExZThiIiwidXNlcl9pZCI6IjEifQ.8zBr-Qke91jHdEc6-ZyyicYPu_71vyZi5p3Ion5pVSE'
+    'Authorization':'Bearer SEU_ACCESS_TOKEN'
 }
 
 refresh_token_logout = {
-    'refresh':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc5MzAyMzU4NiwiaWF0IjoxNzkyNDE4Nzg2LCJqdGkiOiJkMDc5ODFhNTI1MTk0NDViYjFhZWRmNGJmMTdlZGIwZiIsInVzZXJfaWQiOiIxIn0.EbNbsIPYfrSg94vhCVGuK4HuoT5mV5Bvf6dk8bxNH6c'
+    'refresh':'SEU_REFRESH_TOKEN'
 }
 
 #Criando Usuário
@@ -27,12 +27,14 @@ resposta = req.post("http://localhost:8000/auth/users/", json=credentials)
 
 print(resposta.json())
 """
-#Realizando Login
+
 """
+#Realizando Login
 resposta = req.post("http://localhost:8000/auth/jwt/create", json=login)
 
 print(resposta.json())
 """
+
 
 #Acessando rotas seguras
 """

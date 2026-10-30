@@ -31,7 +31,7 @@ class ExtracaoError(Exception):
 def get_llm():
     from langchain.chat_models import init_chat_model
 
-    modelo = init_chat_model(settings.LLM_MODEL, temperature=0)
+    modelo = init_chat_model(LLM_MODEL, temperature=0)
     return modelo.with_structured_output(RespostaExtracao)
 
 
