@@ -17,4 +17,5 @@ dependencies = [
     "pydantic>=2.14.1",
     "requests>=2.34.2",
     "sqlalchemy>=2.0.52",
+    "xmltodict>=1.0.4",
 ]

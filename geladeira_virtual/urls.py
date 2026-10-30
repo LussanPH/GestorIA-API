@@ -8,5 +8,5 @@ urlpatterns = [
     path('auth/', include('djoser.urls.jwt')),
     path('auth/jwt/logout/', TokenBlacklistView.as_view(), name="token_blacklist"),
     path('api/', include('food_register.urls')),
-    
+    path("leitura-qrcode/", include("scrapping_module.urls")),
 ]

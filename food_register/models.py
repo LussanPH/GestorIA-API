@@ -6,7 +6,7 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager
 
 class CustomUserManager(BaseUserManager):
     use_in_migrations = True
-    
+
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError("O endereço de email é obrigatório!")
