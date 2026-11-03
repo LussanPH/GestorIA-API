@@ -30,3 +30,23 @@ saída:   {"n_item": 4, "alimenticio": true, "nome": "Caldo de galinha", "marca"
 """
 
 USER_PROMPT = "Itens da nota fiscal:\n{itens_json}"
+
+
+# ---------------------------------------------------------------------------
+# Prompts do classificador de alimentos (Qwen3-0.6B fine-tunado).
+#
+# Estes textos devem ser idênticos aos usados no fine-tuning e no container
+# classificador-alimentos. Não use JSON/`format` nem few-shot: o modelo foi
+# treinado para responder texto puro com o nome do grupo.
+# ---------------------------------------------------------------------------
+SYSTEM_PROMPT_CLASSIFICACAO = "Você é um classificador de alimentos."
+USER_PROMPT_CLASSIFICACAO = "Classifique o alimento: {alimento}"
+
+
+def system_prompt_classificacao_fallback(grupos) -> str:
+    """Prompt de retry quando a primeira resposta sai dos 16 grupos."""
+    lista = "; ".join(grupos)
+    return (
+        "Você classifica alimentos em grupos alimentares. Grupos válidos: "
+        f"{lista}. Responda somente com o nome do grupo."
+    )

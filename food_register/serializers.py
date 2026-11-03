@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.conf import settings
 from djoser.serializers import UserCreateSerializer
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
@@ -80,3 +81,51 @@ class ProdutoExtraidoSerializer(serializers.Serializer):
     un = serializers.DecimalField(max_digits=10, decimal_places=3)
     valor_unitario = serializers.DecimalField(max_digits=10, decimal_places=2)
     valor_total = serializers.DecimalField(max_digits=10, decimal_places=2)
+
+
+# Serializers do POST /api/produtos/classificar/.
+# O classificador recebe apenas o necessário para classificar; valores
+# (un, valor_unitario, valor_total) não passam pelo modelo.
+
+class ProdutoClassificarSerializer(serializers.Serializer):
+    n_item = serializers.IntegerField(min_value=1)
+    nome = serializers.CharField(max_length=100, allow_null=True, required=False)
+    descricao = serializers.CharField(
+        max_length=255, allow_blank=True, required=False, default=""
+    )
+    alimenticio = serializers.BooleanField()
+
+    def validate(self, item):
+        if item["alimenticio"] and not (
+            (item.get("nome") or "").strip()
+            or (item.get("descricao") or "").strip()
+        ):
+            raise serializers.ValidationError(
+                "Item alimentício precisa de 'nome' ou 'descricao'."
+            )
+        return item
+
+
+class ClassificarRequestSerializer(serializers.Serializer):
+    produtos = ProdutoClassificarSerializer(many=True, allow_empty=False)
+
+    def validate_produtos(self, produtos):
+        if len(produtos) > settings.CLASSIFICADOR_MAX_ITENS:
+            raise serializers.ValidationError(
+                f"No máximo {settings.CLASSIFICADOR_MAX_ITENS} itens por requisição."
+            )
+        n_itens = [produto["n_item"] for produto in produtos]
+        if len(n_itens) != len(set(n_itens)):
+            raise serializers.ValidationError(
+                "Cada 'n_item' deve aparecer uma única vez."
+            )
+        return produtos
+
+
+class ProdutoClassificadoSerializer(serializers.Serializer):
+    n_item = serializers.IntegerField()
+    grupo = serializers.CharField(allow_null=True)
+    categoria_id = serializers.IntegerField(allow_null=True)
+    categoria = serializers.CharField(allow_null=True)
+    precisa_revisao = serializers.BooleanField()
+    motivo = serializers.CharField(allow_null=True)

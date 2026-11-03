@@ -31,12 +31,12 @@ uv run python manage.py test
 ## Estrutura
 - `geladeira_virtual/`: projeto Django (settings, urls raiz)
 - `food_register/`: app principal
-  - `models.py`: `Usuarios` (login por e-mail, `username = None`, exige `nome_completo`), `NotasFiscais` (PK = `chave_acesso` de 44 dígitos; `cnpj` + `nome_estabelecimento` do mercado), `Categorias`, `ProdutosNotasFiscais`
-  - `serializers.py`: `CustomUserCreateSerializer` (djoser) + serializers da nota (`NotaSerializer`, `ItemNotaSerializer`, `ProdutoExtraidoSerializer`)
-  - `views.py`: `ExtrairProdutosView`
-  - `urls.py`: `POST /api/produtos/extrair/` (incluído em `api/` no `urls.py` raiz)
-  - `services/`: extração via LLM (`extracao.py`, `prompts.py`, `schemas.py`). O tamanho do lote é `TAMANHO_LOTE` em `extracao.py`.
-  - `tests/`: testes de extração (LLM mockada) e dos models
+  - `models.py`: `Usuarios` (login por e-mail, `username = None`, exige `nome_completo`), `NotasFiscais` (PK = `chave_acesso` de 44 dígitos; `cnpj` + `nome_estabelecimento` do mercado), `Categorias` (`categoria` exibida + `grupo_canonico` único), `ProdutosNotasFiscais`
+  - `serializers.py`: `CustomUserCreateSerializer` (djoser) + serializers da nota (`NotaSerializer`, `ItemNotaSerializer`, `ProdutoExtraidoSerializer`) e da classificação (`ProdutoClassificarSerializer`, `ClassificarRequestSerializer`, `ProdutoClassificadoSerializer`)
+  - `views.py`: `ExtrairProdutosView`, `ClassificarProdutosView`
+  - `urls.py`: `POST /api/produtos/extrair/` e `POST /api/produtos/classificar/` (incluídos em `api/` no `urls.py` raiz)
+  - `services/`: extração via LLM (`extracao.py`, `prompts.py`, `schemas.py`) e classificação via SLM local (`classificacao.py`). O tamanho do lote da extração é `TAMANHO_LOTE` em `extracao.py`.
+  - `tests/`: testes de extração (LLM mockada), classificação (classificador mockado), categorias e models
 - `request_tests.py`: script manual com `requests` para testar os endpoints de auth
 
 ## Autenticação (rotas atuais)
@@ -45,6 +45,14 @@ uv run python manage.py test
 - `GET /auth/users/me/`: usuário logado (`Authorization: Bearer <access>`)
 - `POST /auth/jwt/logout/`: invalida o refresh token
 - Recuperação de senha pelo fluxo `reset_password` do djoser. Em dev o e-mail sai no console.
+
+## Classificação (SLM local)
+- `POST /api/produtos/classificar/`: recebe `produtos` com `n_item`, `nome`/`descricao` e `alimenticio`; devolve `grupo`, `categoria_id`, `categoria`, `precisa_revisao` e `motivo`. Não grava nada no banco.
+- Chama o container `classificador-alimentos` em `OLLAMA_URL` (padrão `http://127.0.0.1:11434`). **Não usa `LLM_MODEL`**; a extração e a classificação são provedores diferentes.
+- `Categorias.grupo_canonico` mapeia os 16 grupos semeados pela migration `0008_seed_categorias`. A LLM não cria categorias; grupo sem categoria volta com `precisa_revisao=True`.
+- Configuração: `OLLAMA_URL`, `MODELO_CLASSIFICADOR`, `CLASSIFICADOR_TIMEOUT`, `CLASSIFICADOR_MAX_ITENS`.
+- Se a primeira resposta sair dos 16 grupos, o serviço tenta uma vez com a lista explícita de grupos.
+- Itens não alimentícios não são enviados ao modelo e voltam com `motivo="nao_alimenticio"`.
 
 ## Convenções
 - Nomes de models, campos, variáveis e mensagens em **português** (`NotasFiscais`, `valor_total`, `fk_usuario`, `nota_fk`).
@@ -59,5 +67,5 @@ uv run python manage.py test
 - O provedor é configurável via `LLM_MODEL` no formato `provedor:modelo` (LangChain `init_chat_model`). Não fixe um provedor no código.
 - Respeite os limites dos campos do model (`nome` ≤ 100, `marca` ≤ 50).
 - Nos testes, substitua a chamada à LLM por mock; os testes não devem chamar APIs externas.
-- A classificação só usa categorias já existentes em `Categorias`; a LLM não cria categorias novas.
+- A classificação só usa categorias já existentes em `Categorias` (via `grupo_canonico`); a LLM não cria categorias novas.
 - Nada é gravado no banco antes de o usuário confirmar os itens.
