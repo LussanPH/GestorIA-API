@@ -32,11 +32,11 @@ uv run python manage.py test
 - `geladeira_virtual/`: projeto Django (settings, urls raiz)
 - `food_register/`: app principal
   - `models.py`: `Usuarios` (login por e-mail, `username = None`, exige `nome_completo`), `NotasFiscais` (PK = `chave_acesso` de 44 dígitos; `cnpj` + `nome_estabelecimento` do mercado), `Categorias` (`categoria` exibida + `grupo_canonico` único), `ProdutosNotasFiscais`
-  - `serializers.py`: `CustomUserCreateSerializer` (djoser) + serializers da nota (`NotaSerializer`, `ItemNotaSerializer`, `ProdutoExtraidoSerializer`) e da classificação (`ProdutoClassificarSerializer`, `ClassificarRequestSerializer`, `ProdutoClassificadoSerializer`)
-  - `views.py`: `ExtrairProdutosView`, `ClassificarProdutosView`
-  - `urls.py`: `POST /api/produtos/extrair/` e `POST /api/produtos/classificar/` (incluídos em `api/` no `urls.py` raiz)
+  - `serializers.py`: `CustomUserCreateSerializer` (djoser) + serializers da nota (`NotaBaseSerializer`, `NotaSerializer`, `ItemNotaSerializer`, `ProdutoExtraidoSerializer`), da classificação (`ProdutoClassificarSerializer`, `ClassificarRequestSerializer`, `ProdutoClassificadoSerializer`) e da confirmação (`CategoriaSerializer`, `ProdutoConfirmacaoSerializer`, `ConfirmarNotaSerializer`, `ProdutoSalvoSerializer`)
+  - `views.py`: `ExtrairProdutosView`, `ClassificarProdutosView`, `CategoriasView`, `ConfirmarNotaView`
+  - `urls.py`: `POST /api/produtos/extrair/`, `POST /api/produtos/classificar/`, `GET /api/categorias/` e `POST /api/notas/confirmar/` (incluídos em `api/` no `urls.py` raiz)
   - `services/`: extração via LLM (`extracao.py`, `prompts.py`, `schemas.py`) e classificação via SLM local (`classificacao.py`). O tamanho do lote da extração é `TAMANHO_LOTE` em `extracao.py`.
-  - `tests/`: testes de extração (LLM mockada), classificação (classificador mockado), categorias e models
+  - `tests/`: testes de extração (LLM mockada), classificação (classificador mockado), confirmação, categorias e models
 - `request_tests.py`: script manual com `requests` para testar os endpoints de auth
 
 ## Autenticação (rotas atuais)
@@ -53,6 +53,13 @@ uv run python manage.py test
 - Configuração: `OLLAMA_URL`, `MODELO_CLASSIFICADOR`, `CLASSIFICADOR_TIMEOUT`, `CLASSIFICADOR_MAX_ITENS`.
 - Se a primeira resposta sair dos 16 grupos, o serviço tenta uma vez com a lista explícita de grupos.
 - Itens não alimentícios não são enviados ao modelo e voltam com `motivo="nao_alimenticio"`.
+
+## Confirmação da nota
+- `POST /api/notas/confirmar/`: grava `NotasFiscais` + `ProdutosNotasFiscais` em `transaction.atomic()`, com `fk_usuario=request.user`.
+- Apenas itens `alimenticio=True` são persistidos. Itens não alimentícios entram na validação do total, mas são ignorados na gravação.
+- `nota.valor_total` é o total do cupom. O dashboard deve somar apenas os produtos alimentícios para "gastos com alimentos".
+- `chave_acesso` duplicada → 409. Item alimentício sem categoria, categoria inexistente, `n_item` duplicado ou total incoerente → 400.
+- `GET /api/categorias/`: lista `id`, `categoria` e `grupo_canonico` para o front montar o seletor de categorias.
 
 ## Convenções
 - Nomes de models, campos, variáveis e mensagens em **português** (`NotasFiscais`, `valor_total`, `fk_usuario`, `nota_fk`).
