@@ -1,11 +1,12 @@
 from decimal import Decimal
 
 from django.conf import settings
+from django.db.models import Sum
 from djoser.serializers import UserCreateSerializer
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from .models import Categorias, ProdutosNotasFiscais
+from .models import Categorias, NotasFiscais, ProdutosNotasFiscais
 
 
 User = get_user_model()
@@ -249,3 +250,84 @@ class ProdutoSalvoSerializer(serializers.ModelSerializer):
             "categoria_id",
             "categoria",
         )
+
+
+# Serializers da listagem de notas e do dashboard.
+
+class PeriodoQuerySerializer(serializers.Serializer):
+    inicio = serializers.DateField(required=False)
+    fim = serializers.DateField(required=False)
+
+    def validate(self, dados):
+        if (
+            dados.get("inicio")
+            and dados.get("fim")
+            and dados["inicio"] > dados["fim"]
+        ):
+            raise serializers.ValidationError(
+                "'inicio' deve ser anterior ou igual a 'fim'."
+            )
+        return dados
+
+
+class NotaListaSerializer(serializers.ModelSerializer):
+    qtd_produtos = serializers.SerializerMethodField()
+    total_alimentos = serializers.SerializerMethodField()
+
+    class Meta:
+        model = NotasFiscais
+        fields = (
+            "chave_acesso",
+            "data_compra",
+            "valor_total",
+            "cnpj",
+            "nome_estabelecimento",
+            "metodo_pag",
+            "qtd_produtos",
+            "total_alimentos",
+        )
+
+    def get_qtd_produtos(self, obj):
+        qtd = getattr(obj, "qtd_produtos", None)
+        if qtd is None:
+            qtd = obj.produtosnotasfiscais_set.count()
+        return qtd
+
+    def get_total_alimentos(self, obj):
+        total = getattr(obj, "total_alimentos", None)
+        if total is None:
+            total = obj.produtosnotasfiscais_set.aggregate(
+                total=Sum("valor_total")
+            )["total"]
+        return f"{(total or 0):.2f}"
+
+
+class NotaDetalheSerializer(serializers.ModelSerializer):
+    produtos = ProdutoSalvoSerializer(
+        many=True, source="produtosnotasfiscais_set"
+    )
+    qtd_produtos = serializers.SerializerMethodField()
+    total_alimentos = serializers.SerializerMethodField()
+
+    class Meta:
+        model = NotasFiscais
+        fields = (
+            "chave_acesso",
+            "data_compra",
+            "valor_total",
+            "cnpj",
+            "nome_estabelecimento",
+            "metodo_pag",
+            "qtd_produtos",
+            "total_alimentos",
+            "produtos",
+        )
+
+    def get_qtd_produtos(self, obj):
+        return obj.produtosnotasfiscais_set.count()
+
+    def get_total_alimentos(self, obj):
+        total = obj.produtosnotasfiscais_set.aggregate(
+            total=Sum("valor_total")
+        )["total"]
+        return f"{(total or 0):.2f}"
