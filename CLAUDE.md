@@ -32,11 +32,11 @@ uv run python manage.py test
 - `geladeira_virtual/`: projeto Django (settings, urls raiz)
 - `food_register/`: app principal
   - `models.py`: `Usuarios` (login por e-mail, `username = None`, exige `nome_completo`), `NotasFiscais` (PK = `chave_acesso` de 44 dígitos; `cnpj` + `nome_estabelecimento` do mercado), `Categorias` (`categoria` exibida + `grupo_canonico` único), `ProdutosNotasFiscais`
-  - `serializers.py`: `CustomUserCreateSerializer` (djoser) + serializers da nota (`NotaBaseSerializer`, `NotaSerializer`, `ItemNotaSerializer`, `ProdutoExtraidoSerializer`), da classificação (`ProdutoClassificarSerializer`, `ClassificarRequestSerializer`, `ProdutoClassificadoSerializer`) e da confirmação (`CategoriaSerializer`, `ProdutoConfirmacaoSerializer`, `ConfirmarNotaSerializer`, `ProdutoSalvoSerializer`)
-  - `views.py`: `ExtrairProdutosView`, `ClassificarProdutosView`, `CategoriasView`, `ConfirmarNotaView`
-  - `urls.py`: `POST /api/produtos/extrair/`, `POST /api/produtos/classificar/`, `GET /api/categorias/` e `POST /api/notas/confirmar/` (incluídos em `api/` no `urls.py` raiz)
+  - `serializers.py`: `CustomUserCreateSerializer` (djoser) + serializers da nota (`NotaBaseSerializer`, `NotaSerializer`, `ItemNotaSerializer`, `ProdutoExtraidoSerializer`), da classificação (`ProdutoClassificarSerializer`, `ClassificarRequestSerializer`, `ProdutoClassificadoSerializer`), da confirmação (`CategoriaSerializer`, `ProdutoConfirmacaoSerializer`, `ConfirmarNotaSerializer`, `ProdutoSalvoSerializer`) e da listagem (`PeriodoQuerySerializer`, `NotaListaSerializer`, `NotaDetalheSerializer`)
+  - `views.py`: `ExtrairProdutosView`, `ClassificarProdutosView`, `CategoriasView`, `ConfirmarNotaView`, `NotasListView`, `NotaDetailView`, `DashboardView`
+  - `urls.py`: `POST /api/produtos/extrair/`, `POST /api/produtos/classificar/`, `GET /api/categorias/`, `POST /api/notas/confirmar/`, `GET /api/notas/`, `GET /api/notas/<chave_acesso>/` e `GET /api/dashboard/` (incluídos em `api/` no `urls.py` raiz)
   - `services/`: extração via LLM (`extracao.py`, `prompts.py`, `schemas.py`) e classificação via SLM local (`classificacao.py`). O tamanho do lote da extração é `TAMANHO_LOTE` em `extracao.py`.
-  - `tests/`: testes de extração (LLM mockada), classificação (classificador mockado), confirmação, categorias e models
+  - `tests/`: testes de extração (LLM mockada), classificação (classificador mockado), confirmação, listagem/dashboard, categorias e models
 - `request_tests.py`: script manual com `requests` para testar os endpoints de auth
 
 ## Autenticação (rotas atuais)
@@ -60,6 +60,13 @@ uv run python manage.py test
 - `nota.valor_total` é o total do cupom. O dashboard deve somar apenas os produtos alimentícios para "gastos com alimentos".
 - `chave_acesso` duplicada → 409. Item alimentício sem categoria, categoria inexistente, `n_item` duplicado ou total incoerente → 400.
 - `GET /api/categorias/`: lista `id`, `categoria` e `grupo_canonico` para o front montar o seletor de categorias.
+
+## Listagem e dashboard
+- `GET /api/notas/`: lista as notas do usuário autenticado. Filtros opcionais `inicio`/`fim` (`YYYY-MM-DD`). Cada item traz `valor_total` (total do cupom), `total_alimentos` (soma dos produtos alimentícios persistidos) e `qtd_produtos`.
+- `GET /api/notas/<chave_acesso>/`: detalhe da nota com produtos e categorias. Nota de outro usuário → 404.
+- `GET /api/dashboard/?inicio=&fim=`: `total_alimentos`, `total_cupons`, `qtd_notas`, `qtd_produtos`, `por_categoria` e `por_mes`.
+- `total_alimentos` é a soma dos produtos persistidos (somente alimentos); `total_cupons` é a soma dos totais das notas e pode incluir itens não alimentícios do cupom.
+- Todas as consultas filtram por `fk_usuario=request.user`.
 
 ## Convenções
 - Nomes de models, campos, variáveis e mensagens em **português** (`NotasFiscais`, `valor_total`, `fk_usuario`, `nota_fk`).

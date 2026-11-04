@@ -1,7 +1,11 @@
+from decimal import Decimal
+
 from django.db import IntegrityError, transaction
+from django.db.models import Count, Sum
+from django.db.models.functions import ExtractMonth, ExtractYear
 from django.shortcuts import render
 from rest_framework import status
-from rest_framework.generics import ListAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -12,7 +16,10 @@ from .serializers import (
     ClassificarRequestSerializer,
     ConfirmarNotaSerializer,
     NotaBaseSerializer,
+    NotaDetalheSerializer,
+    NotaListaSerializer,
     NotaSerializer,
+    PeriodoQuerySerializer,
     ProdutoClassificadoSerializer,
     ProdutoExtraidoSerializer,
     ProdutoSalvoSerializer,
@@ -164,3 +171,126 @@ class ConfirmarNotaView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
+
+
+class NotasListView(ListAPIView):
+    """GET /api/notas/ — lista as notas do usuário autenticado.
+
+    Aceita ``?inicio=YYYY-MM-DD`` e ``?fim=YYYY-MM-DD``.
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = NotaListaSerializer
+
+    def get_queryset(self):
+        parametros = PeriodoQuerySerializer(data=self.request.query_params)
+        parametros.is_valid(raise_exception=True)
+
+        queryset = (
+            NotasFiscais.objects.filter(fk_usuario=self.request.user)
+            .annotate(
+                qtd_produtos=Count("produtosnotasfiscais"),
+                total_alimentos=Sum(
+                    "produtosnotasfiscais__valor_total"
+                ),
+            )
+            .order_by("-data_compra")
+        )
+
+        inicio = parametros.validated_data.get("inicio")
+        fim = parametros.validated_data.get("fim")
+        if inicio:
+            queryset = queryset.filter(data_compra__gte=inicio)
+        if fim:
+            queryset = queryset.filter(data_compra__lte=fim)
+        return queryset
+
+
+class NotaDetailView(RetrieveAPIView):
+    """GET /api/notas/<chave_acesso>/ — detalhe de uma nota do usuário."""
+    permission_classes = [IsAuthenticated]
+    serializer_class = NotaDetalheSerializer
+    lookup_field = "chave_acesso"
+
+    def get_queryset(self):
+        return (
+            NotasFiscais.objects.filter(fk_usuario=self.request.user)
+            .prefetch_related("produtosnotasfiscais_set__categoria_fk")
+        )
+
+
+class DashboardView(APIView):
+    """GET /api/dashboard/ — resumo dos gastos com alimentos.
+
+    Aceita ``?inicio=YYYY-MM-DD`` e ``?fim=YYYY-MM-DD``. Os totais de
+    alimentos usam apenas os produtos persistidos (que já são só alimentos).
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        parametros = PeriodoQuerySerializer(data=request.query_params)
+        parametros.is_valid(raise_exception=True)
+        inicio = parametros.validated_data.get("inicio")
+        fim = parametros.validated_data.get("fim")
+
+        notas = NotasFiscais.objects.filter(fk_usuario=request.user)
+        if inicio:
+            notas = notas.filter(data_compra__gte=inicio)
+        if fim:
+            notas = notas.filter(data_compra__lte=fim)
+
+        produtos = ProdutosNotasFiscais.objects.filter(nota_fk__in=notas)
+        total_alimentos = (
+            produtos.aggregate(total=Sum("valor_total"))["total"]
+            or Decimal("0")
+        )
+        total_cupons = (
+            notas.aggregate(total=Sum("valor_total"))["total"]
+            or Decimal("0")
+        )
+
+        por_categoria = (
+            produtos.values(
+                "categoria_fk_id", "categoria_fk__categoria"
+            )
+            .annotate(
+                total=Sum("valor_total"),
+                quantidade=Count("id"),
+            )
+            .order_by("-total")
+        )
+        por_mes = (
+            produtos.annotate(
+                ano=ExtractYear("nota_fk__data_compra"),
+                mes=ExtractMonth("nota_fk__data_compra"),
+            )
+            .values("ano", "mes")
+            .annotate(total=Sum("valor_total"))
+            .order_by("ano", "mes")
+        )
+
+        return Response({
+            "periodo": {
+                "inicio": inicio.isoformat() if inicio else None,
+                "fim": fim.isoformat() if fim else None,
+            },
+            "total_alimentos": f"{total_alimentos:.2f}",
+            "total_cupons": f"{total_cupons:.2f}",
+            "qtd_notas": notas.count(),
+            "qtd_produtos": produtos.count(),
+            "por_categoria": [
+                {
+                    "categoria_id": item["categoria_fk_id"],
+                    "categoria": item["categoria_fk__categoria"],
+                    "total": f"{item['total']:.2f}",
+                    "quantidade": item["quantidade"],
+                }
+                for item in por_categoria
+            ],
+            "por_mes": [
+                {
+                    "mes": f"{item['ano']:04d}-{item['mes']:02d}",
+                    "total": f"{item['total']:.2f}",
+                }
+                for item in por_mes
+            ],
+        })
