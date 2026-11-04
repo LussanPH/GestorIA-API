@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Usuarios
+from .models import Categorias, Usuarios
 
 
 @admin.register(Usuarios)
@@ -22,5 +22,13 @@ class CustomUserAdmin(UserAdmin):
             'fields':('email', 'nome_completo', 'password1', 'password2'),
         }),
     )
+
+
+@admin.register(Categorias)
+class CategoriasAdmin(admin.ModelAdmin):
+    list_display = ('id', 'categoria', 'grupo_canonico')
+    search_fields = ('categoria', 'grupo_canonico')
+    ordering = ('categoria',)
+
 
 
