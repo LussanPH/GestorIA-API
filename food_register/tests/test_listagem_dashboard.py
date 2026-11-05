@@ -117,6 +117,55 @@ class ListagemDashboardTests(APITestCase):
     def test_detalhe_inexistente_retorna_404(self):
         self.assertEqual(self.client.get(f"{NOTAS_URL}999/").status_code, 404)
 
+    def test_exclui_nota_do_usuario(self):
+        resposta = self.client.delete(f"{NOTAS_URL}1/")
+
+        self.assertEqual(resposta.status_code, 204)
+        self.assertFalse(NotasFiscais.objects.filter(chave_acesso="1").exists())
+        # Os produtos saem junto com a nota; os das outras notas ficam.
+        self.assertFalse(
+            ProdutosNotasFiscais.objects.filter(nota_fk_id="1").exists()
+        )
+        self.assertTrue(NotasFiscais.objects.filter(chave_acesso="2").exists())
+        self.assertEqual(
+            ProdutosNotasFiscais.objects.filter(nota_fk_id="2").count(), 1
+        )
+        self.assertEqual(self.client.get(f"{NOTAS_URL}1/").status_code, 404)
+
+    def test_excluir_nota_de_outro_usuario_retorna_404(self):
+        resposta = self.client.delete(f"{NOTAS_URL}3/")
+
+        self.assertEqual(resposta.status_code, 404)
+        self.assertTrue(NotasFiscais.objects.filter(chave_acesso="3").exists())
+        self.assertEqual(
+            ProdutosNotasFiscais.objects.filter(nota_fk_id="3").count(), 1
+        )
+
+    def test_excluir_nota_inexistente_retorna_404(self):
+        self.assertEqual(self.client.delete(f"{NOTAS_URL}999/").status_code, 404)
+
+    def test_excluir_exige_autenticacao(self):
+        self.client.force_authenticate(None)
+
+        resposta = self.client.delete(f"{NOTAS_URL}1/")
+
+        self.assertIn(resposta.status_code, (401, 403))
+        self.assertTrue(NotasFiscais.objects.filter(chave_acesso="1").exists())
+
+    def test_dashboard_apos_excluir(self):
+        self.client.delete(f"{NOTAS_URL}1/")
+
+        dados = self.client.get(DASHBOARD_URL).json()
+
+        # Sobra só a nota 2 (Café, R$ 8,00).
+        self.assertEqual(dados["qtd_notas"], 1)
+        self.assertEqual(dados["qtd_produtos"], 1)
+        self.assertEqual(dados["total_alimentos"], "8.00")
+        self.assertEqual(dados["total_cupons"], "8.00")
+        self.assertEqual(
+            [c["categoria"] for c in dados["por_categoria"]], ["Bebidas"]
+        )
+
     def test_dashboard_geral(self):
         resposta = self.client.get(DASHBOARD_URL)
 

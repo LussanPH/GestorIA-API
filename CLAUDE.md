@@ -34,7 +34,7 @@ uv run python manage.py test
   - `models.py`: `Usuarios` (login por e-mail, `username = None`, exige `nome_completo`), `NotasFiscais` (PK = `chave_acesso` de 44 dígitos; `cnpj` + `nome_estabelecimento` do mercado), `Categorias` (`categoria` exibida + `grupo_canonico` único), `ProdutosNotasFiscais`
   - `serializers.py`: `CustomUserCreateSerializer` (djoser) + serializers da nota (`NotaBaseSerializer`, `NotaSerializer`, `ItemNotaSerializer`, `ProdutoExtraidoSerializer`), da classificação (`ProdutoClassificarSerializer`, `ClassificarRequestSerializer`, `ProdutoClassificadoSerializer`), da confirmação (`CategoriaSerializer`, `ProdutoConfirmacaoSerializer`, `ConfirmarNotaSerializer`, `ProdutoSalvoSerializer`) e da listagem (`PeriodoQuerySerializer`, `NotaListaSerializer`, `NotaDetalheSerializer`)
   - `views.py`: `ExtrairProdutosView`, `ClassificarProdutosView`, `CategoriasView`, `ConfirmarNotaView`, `NotasListView`, `NotaDetailView`, `DashboardView`
-  - `urls.py`: `POST /api/produtos/extrair/`, `POST /api/produtos/classificar/`, `GET /api/categorias/`, `POST /api/notas/confirmar/`, `GET /api/notas/`, `GET /api/notas/<chave_acesso>/` e `GET /api/dashboard/` (incluídos em `api/` no `urls.py` raiz)
+  - `urls.py`: `POST /api/produtos/extrair/`, `POST /api/produtos/classificar/`, `GET /api/categorias/`, `POST /api/notas/confirmar/`, `GET /api/notas/`, `GET /api/notas/<chave_acesso>/`, `DELETE /api/notas/<chave_acesso>/` e `GET /api/dashboard/` (incluídos em `api/` no `urls.py` raiz)
   - `services/`: extração via LLM (`extracao.py`, `prompts.py`, `schemas.py`) e classificação via SLM local (`classificacao.py`). O tamanho do lote da extração é `TAMANHO_LOTE` em `extracao.py`.
   - `tests/`: testes de extração (LLM mockada), classificação (classificador mockado), confirmação, listagem/dashboard, categorias e models
 - `request_tests.py`: script manual com `requests` para testar os endpoints de auth
@@ -64,6 +64,7 @@ uv run python manage.py test
 ## Listagem e dashboard
 - `GET /api/notas/`: lista as notas do usuário autenticado. Filtros opcionais `inicio`/`fim` (`YYYY-MM-DD`). Cada item traz `valor_total` (total do cupom), `total_alimentos` (soma dos produtos alimentícios persistidos) e `qtd_produtos`.
 - `GET /api/notas/<chave_acesso>/`: detalhe da nota com produtos e categorias. Nota de outro usuário → 404.
+- `DELETE /api/notas/<chave_acesso>/`: exclui a nota do usuário e, em cascata, os produtos dela (204). Nota de outro usuário ou inexistente → 404.
 - `GET /api/dashboard/?inicio=&fim=`: `total_alimentos`, `total_cupons`, `qtd_notas`, `qtd_produtos`, `por_categoria` e `por_mes`.
 - `total_alimentos` é a soma dos produtos persistidos (somente alimentos); `total_cupons` é a soma dos totais das notas e pode incluir itens não alimentícios do cupom.
 - Todas as consultas filtram por `fk_usuario=request.user`.

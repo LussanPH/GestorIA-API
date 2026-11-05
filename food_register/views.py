@@ -5,7 +5,7 @@ from django.db.models import Count, Sum
 from django.db.models.functions import ExtractMonth, ExtractYear
 from django.shortcuts import render
 from rest_framework import status
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView, RetrieveDestroyAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -205,8 +205,12 @@ class NotasListView(ListAPIView):
         return queryset
 
 
-class NotaDetailView(RetrieveAPIView):
-    """GET /api/notas/<chave_acesso>/ — detalhe de uma nota do usuário."""
+class NotaDetailView(RetrieveDestroyAPIView):
+    """GET /api/notas/<chave_acesso>/ — detalhe de uma nota do usuário.
+
+    DELETE /api/notas/<chave_acesso>/ — exclui a nota (204). Os produtos saem
+    junto (``on_delete=CASCADE``). Nota de outro usuário ou inexistente → 404.
+    """
     permission_classes = [IsAuthenticated]
     serializer_class = NotaDetalheSerializer
     lookup_field = "chave_acesso"
